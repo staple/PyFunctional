@@ -3,7 +3,6 @@ from __future__ import absolute_import
 import re
 import csv as csvapi
 import json as jsonapi
-import sqlite3 as sqlite3api
 
 from future import builtins
 import six
@@ -202,32 +201,6 @@ class Stream(object):
             return self(json_input)
         else:
             return self(six.viewitems(json_input))
-
-    # pylint: disable=keyword-arg-before-vararg
-    def sqlite3(self, conn, sql, parameters=None, *args, **kwargs):
-        """
-        Reads input by querying from a sqlite database.
-
-        >>> seq.sqlite3('examples/users.db', 'select id, name from users where id = 1;').first()
-        [(1, 'Tom')]
-
-        :param conn: path or sqlite connection, cursor
-        :param sql: SQL query string
-        :param parameters: Parameters for sql query
-        :return: Sequence wrapping SQL cursor
-        """
-
-        if parameters is None:
-            parameters = ()
-
-        if isinstance(conn, (sqlite3api.Connection, sqlite3api.Cursor)):
-            return self(conn.execute(sql, parameters))
-        elif isinstance(conn, str):
-            with sqlite3api.connect(conn, *args, **kwargs) as input_conn:
-                return self(input_conn.execute(sql, parameters))
-        else:
-            raise ValueError('conn must be a must be a file path or sqlite3 Connection/Cursor')
-
 
 class ParallelStream(Stream):
     """
