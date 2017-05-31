@@ -7,7 +7,7 @@ import json as jsonapi
 from future import builtins
 import six
 
-from functional.execution import ExecutionEngine, ParallelExecutionEngine
+from functional.execution import ExecutionEngine
 from functional.pipeline import Sequence
 from functional.util import is_primitive
 from functional.io import get_read_function
@@ -202,39 +202,5 @@ class Stream(object):
         else:
             return self(six.viewitems(json_input))
 
-class ParallelStream(Stream):
-    """
-    Parallelized version of functional.streams.Stream normally accessible as `pseq`
-    """
-    def __init__(self, processes=None, partition_size=None, disable_compression=False):
-        """
-        Configure Stream for parallel processing and file compression detection
-        :param processes: Number of parallel processes
-        :param disable_compression: Disable file compression detection
-        """
-        super(ParallelStream, self).__init__(
-            disable_compression=disable_compression)
-        self.processes = processes
-        self.partition_size = partition_size
-
-    def __call__(self, *args, **kwargs):
-        """
-        Create a Sequence using a parallel ExecutionEngine.
-
-        If args has more than one argument then the argument list becomes the sequence.
-
-        If args[0] is primitive, a sequence wrapping it is created.
-
-        If args[0] is a list, tuple, iterable, or Sequence it is wrapped as a Sequence.
-
-        :param args: Sequence to wrap
-        :return: Wrapped sequence
-        """
-        processes = kwargs.get('processes') or self.processes
-        partition_size = kwargs.get('partition_size') or self.partition_size
-        engine = ParallelExecutionEngine(processes=processes, partition_size=partition_size)
-        return self._parse_args(args, engine, 'pseq() takes at least 1 argument ({0} given)')
-
 # pylint: disable=invalid-name
 seq = Stream()
-pseq = ParallelStream()
