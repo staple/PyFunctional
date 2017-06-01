@@ -5,7 +5,6 @@ import math
 from functools import reduce
 from itertools import chain, count, islice, takewhile
 
-import dill as serializer
 import six
 
 
@@ -113,29 +112,6 @@ def split_every(parts, iterable):
     :return: return the iterable split in parts
     """
     return takewhile(bool, (list(islice(iterable, parts)) for _ in count()))
-
-
-def unpack(packed):
-    """
-    Unpack the function and args then apply the function to the arguments and return result
-    :param packed: input packed tuple of (func, args)
-    :return: result of applying packed function on packed args
-    """
-    func, args = serializer.loads(packed)
-    result = func(*args)
-    if isinstance(result, collections.Iterable):
-        return list(result)
-    return None
-
-
-def pack(func, args):
-    """
-    Pack a function and the args it should be applied to
-    :param func: Function to apply
-    :param args: Args to evaluate with
-    :return: Packed (func, args) tuple
-    """
-    return serializer.dumps((func, args), PROTOCOL)
 
 
 def compute_partition_size(result, processes):
