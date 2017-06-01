@@ -4,7 +4,6 @@ import collections
 import math
 from functools import reduce
 from itertools import chain, count, islice, takewhile
-from multiprocessing import Pool, cpu_count
 
 import dill as serializer
 import six
@@ -14,7 +13,6 @@ if six.PY2:
     PROTOCOL = 2
 else:
     PROTOCOL = serializer.HIGHEST_PROTOCOL
-CPU_COUNT = cpu_count()
 
 
 def is_primitive(val):
@@ -138,42 +136,6 @@ def pack(func, args):
     :return: Packed (func, args) tuple
     """
     return serializer.dumps((func, args), PROTOCOL)
-
-
-def parallelize(func, result, processes=None, partition_size=None):
-    """
-    Creates an iterable which is lazily computed in parallel from applying func on result
-    :param func: Function to apply
-    :param result: Data to apply to
-    :param processes: Number of processes to use in parallel
-    :param partition_size: Size of partitions for each parallel process
-    :return: Iterable of applying func on result
-    """
-    parallel_iter = lazy_parallelize(
-        func, result, processes=processes, partition_size=partition_size)
-    return chain.from_iterable(parallel_iter)
-
-
-def lazy_parallelize(func, result, processes=None, partition_size=None):
-    """
-    Lazily computes an iterable in parallel, and returns them in pool chunks
-    :param func: Function to apply
-    :param result: Data to apply to
-    :param processes: Number of processes to use in parallel
-    :param partition_size: Size of partitions for each parallel process
-    :return: Iterable of chunks where each chunk as func applied to it
-    """
-    if processes is None or processes < 1:
-        processes = CPU_COUNT
-    else:
-        processes = min(processes, CPU_COUNT)
-    partition_size = partition_size or compute_partition_size(result, processes)
-    pool = Pool(processes=processes)
-    partitions = split_every(partition_size, iter(result))
-    packed_partitions = (pack(func, (partition, )) for partition in partitions)
-    for pool_result in pool.imap(unpack, packed_partitions):
-        yield pool_result
-    pool.terminate()
 
 
 def compute_partition_size(result, processes):
